@@ -3,10 +3,14 @@ import statistics
 import pandas
 import numpy
 from math import e
+from statistics import mean
 from sklearn.ensemble import RandomForestClassifier
 from sklearn import model_selection
 from sklearn.metrics import accuracy_score
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
 from sklearn.metrics import confusion_matrix
+import matplotlib.pyplot as plt
 
 FILENAME = "Project1Data.csv"
 POSSIBLE_ARGS = ["dia", "sys", "eda", "res", "all"]
@@ -46,21 +50,27 @@ def all_feature_calculation(csv_data):
     data_target = [pain['Class'] == "Pain" for _, pain in csv_data_typed.iterrows()]
     return features, data_target
 
-# The output of your script must print the confusion matrix, classification accuracy, precision, and recall.
+# confusion matrix, classification accuracy, precision, and recall.
 def random_forest_predictions(calculations, targets):
-    pain_forest = RandomForestClassifier(max_depth=10, random_state=0)
+    pain_forest = RandomForestClassifier()
+    accuracy_list, precision_list, matrix_list, recall_list = [], [], [], []
     kfold = model_selection.KFold(n_splits = 10)
     np_calc = numpy.asarray(calculations)
     np_targets = numpy.asarray(targets)
-    # kfold.get_n_splits(calculations)
+
     for train_i, test_i in kfold.split(calculations):
         pain_forest.fit(np_calc[train_i], np_targets[train_i])
-        score = pain_forest.score(np_calc[test_i], np_targets[test_i])
         target_pred = pain_forest.predict(np_calc[test_i])
-        print(target_pred)
-        print(score)
-# https://stackoverflow.com/questions/44487654/build-a-random-forest-regressor-with-cross-validation-from-scratch
-# https://stats.stackexchange.com/questions/125756/classification-score-for-random-forest
+        accuracy_list.append(accuracy_score(np_targets[test_i], target_pred))
+        precision_list.append(precision_score(np_targets[test_i], target_pred))
+        recall_list.append(recall_score(np_targets[test_i], target_pred))
+        matrix_list.append(numpy.matrix(confusion_matrix(np_targets[test_i], target_pred)))
+
+    print("\nAccuracy avg:\t" + str(mean(accuracy_list)))
+    print("Precision avg:\t" + str(mean(precision_list)))
+    print("Recall avg: \t" + str(mean(recall_list)))
+    print("Confusion matrix avg:")
+    print(sum(matrix_list)/len(matrix_list))
 
 
 if __name__ == "__main__":
